@@ -17,11 +17,10 @@ import lombok.Builder;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 @Builder
 public class InvoiceGenerator {
@@ -85,17 +84,31 @@ public class InvoiceGenerator {
 
     private void setUnitsLayout(Document document) throws IOException {
         //Description,CarNo,CarModel,CarType,Period,Quantity,Unit,Price
-        Table table = new Table(UnitValue.createPercentArray(new float[]{2, 2, 2, 1, 2, 1, 1, 1}));
+        Table table = new Table(UnitValue.createPercentArray(new float[]{2, 2, 2, 1, 2, 1, 2, 2}));
         table.setMarginTop(20);
         setUnitsHeader(table);
         populateCarsTableData(table);
         document.add(table);
     }
 
+    private void addPromoCodeRows(Table table, final String description, final String discount) throws IOException {
+        Paragraph matsnbeltspara = new Paragraph(description);
+
+        matsnbeltspara.setTextAlignment(TextAlignment.LEFT);
+        Cell cell = new Cell(1, 6).add(matsnbeltspara);
+        table.addCell(cell);
+        ///// promocode
+        cell = new Cell(1, 1).add(getUnitsColumnParagraph("(" +discount + ")", TextAlignment.RIGHT));
+        table.addCell(cell);
+        cell = new Cell(1, 1).add(getUnitsColumnParagraph("(" +discount + ")", TextAlignment.RIGHT));
+        table.addCell(cell);
+    }
+
     private void populateCarsTableData(Table table) throws IOException {
         Cell cell;
         int i = 1;
-        float totalAmount = 0;
+        double totalAmount = 0;
+        Map<String, String> promoCodeMap = new LinkedHashMap<String, String>();
         for(CustomerCar car : customerProfile.getCars()) {
             cell = new Cell(1, 1).add(
                     getUnitsColumnParagraph("Car Subscription " + i, TextAlignment.LEFT));
@@ -110,21 +123,32 @@ public class InvoiceGenerator {
                     getUnitsColumnParagraph(car.getCarType(), TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph(car.getStartDate() + " - " + "30th June, 2019", TextAlignment.LEFT));
+                    getUnitsColumnParagraph(car.getStartDate() + " - " + "30-Jun-19", TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
                     getUnitsColumnParagraph("1", TextAlignment.RIGHT));
             table.addCell(cell);
-            float floatPrice = Float.parseFloat(car.getPriceCharge());
-            totalAmount += floatPrice;
+            double discount = car.getActualRate() - car.getDiscountRate();
+            if(discount > 0) {
+                promoCodeMap.put("Discount for " + i + getDayOfMonthSuffix(i) + " car - " + car.getPromoCode(),
+                        String.format("%.02f", discount));
+            }
+            totalAmount += car.getActualRate();
+            totalAmount -= discount;
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph(String.format("%.02f", floatPrice), TextAlignment.RIGHT));
+                    getUnitsColumnParagraph(String.format("%.02f", car.getActualRate()), TextAlignment.RIGHT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph(String.format("%.02f", floatPrice), TextAlignment.RIGHT));
+                    getUnitsColumnParagraph(String.format("%.02f", car.getActualRate()), TextAlignment.RIGHT));
             table.addCell(cell);
             i++;
         }
+
+        for(Map.Entry<String, String> promo:promoCodeMap.entrySet()) {
+
+            addPromoCodeRows(table, promo.getKey(), promo.getValue());
+        }
+
         Paragraph matsnbeltspara = new Paragraph("Thanks for your business!");
         PdfFont bold = PdfFontFactory.createFont(FontConstants.TIMES_ITALIC);
         matsnbeltspara.setFont(bold);
@@ -152,6 +176,18 @@ public class InvoiceGenerator {
                 getUnitsColumnParagraph(String.format("%.02f", totalAmount), TextAlignment.RIGHT));
         cell.setBorderLeft(Border.NO_BORDER);
         table.addCell(cell);
+    }
+
+    private String getDayOfMonthSuffix(final int n) {
+        if (n >= 11 && n <= 13) {
+            return "th";
+        }
+        switch (n % 10) {
+            case 1:  return "st";
+            case 2:  return "nd";
+            case 3:  return "rd";
+            default: return "th";
+        }
     }
 
     private Paragraph getUnitsColumnParagraph(String text, TextAlignment alignment) {
@@ -232,9 +268,9 @@ public class InvoiceGenerator {
         cell.setBorder(Border.NO_BORDER);
 
         table.addCell(cell);
-
+        String divider = customerProfile.getApartmentNo() == null || customerProfile.getApartmentNo().isEmpty() ? "" : ", ";
         cell = new Cell(1, 1).add(new Paragraph(
-                customerProfile.getApartmentNo() + ", " + customerProfile.getApartment()));
+                customerProfile.getApartmentNo() + divider + customerProfile.getApartment()));
         cell.setBorder(Border.NO_BORDER);
 
         table.addCell(cell);
