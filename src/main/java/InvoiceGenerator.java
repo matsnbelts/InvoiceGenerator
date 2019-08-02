@@ -14,8 +14,11 @@ import com.itextpdf.layout.property.HorizontalAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.layout.property.UnitValue;
 import lombok.Builder;
+import lombok.Getter;
 
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -29,8 +32,9 @@ public class InvoiceGenerator {
     private CustomerProfile customerProfile;
     private String area;
     private String cityPincode;
+    private String vehicle = "Car";
 
-    public void generateInvoicePdf() throws IOException {
+    void generateInvoicePdf() throws IOException {
         if(area == null) {
             area = "Karapakkam";
         }
@@ -38,6 +42,10 @@ public class InvoiceGenerator {
             cityPincode = "Chennai - 600097";
         }
         createPdf(destinationFile);
+    }
+
+    public CustomerProfile getCustomerProfile() {
+        return customerProfile;
     }
 
     private void createPdf(String dest) throws IOException {
@@ -50,7 +58,6 @@ public class InvoiceGenerator {
         float[] col_widths = {40, 40};
         Table table = new Table(col_widths);
         table.setWidth(UnitValue.createPointValue(200));
-        System.out.println(table.getWidth());
         table.setHorizontalAlignment(HorizontalAlignment.RIGHT);
         DeviceRgb lightGrey = new DeviceRgb(227, 225, 225);
         table.addCell(getCell(1, "Customer Id", lightGrey, TextAlignment.LEFT));
@@ -60,10 +67,10 @@ public class InvoiceGenerator {
         table.addCell(getCell(1, "MNB-19-" +  System.currentTimeMillis(), null, TextAlignment.RIGHT));
 
         table.addCell(getCell(1, "Invoice Date", lightGrey, TextAlignment.LEFT));
-        table.addCell(getCell(1, "June 30, 2019", null, TextAlignment.RIGHT));
+        table.addCell(getCell(1, "July 31, 2019", null, TextAlignment.RIGHT));
 
         table.addCell(getCell(1, "Payment Due Date", lightGrey, TextAlignment.LEFT));
-        table.addCell(getCell(1, "July 05, 2019", null, TextAlignment.RIGHT));
+        table.addCell(getCell(1, "August 05, 2019", null, TextAlignment.RIGHT));
         document.add(table);
         setUnitsLayout(document);
         setFooterLayout(document);
@@ -110,8 +117,10 @@ public class InvoiceGenerator {
         double totalAmount = 0;
         Map<String, String> promoCodeMap = new LinkedHashMap<String, String>();
         for(CustomerCar car : customerProfile.getCars()) {
+            final String vehicle = (car.getCarType().equalsIgnoreCase(LoadCustomerDetails.CarType.BIKE))
+                    ? LoadCustomerDetails.CarType.BIKE : "Car";
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph("Car Subscription " + i, TextAlignment.LEFT));
+                    getUnitsColumnParagraph(vehicle + " Subscription " + i, TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
                     getUnitsColumnParagraph(car.getCarNo(), TextAlignment.LEFT));
@@ -123,15 +132,20 @@ public class InvoiceGenerator {
                     getUnitsColumnParagraph(car.getCarType(), TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph(car.getStartDate() + " - " + "30-Jun-19", TextAlignment.LEFT));
+                    getUnitsColumnParagraph(car.getStartDate() + " - " + "31-July-19", TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
                     getUnitsColumnParagraph("1", TextAlignment.RIGHT));
             table.addCell(cell);
             double discount = car.getActualRate() - car.getDiscountRate();
             if(discount > 0) {
-                promoCodeMap.put("Discount for " + i + getDayOfMonthSuffix(i) + " car - " + car.getPromoCode(),
-                        String.format("%.02f", discount));
+                if(customerProfile.getCars().size() == 1) {
+                    promoCodeMap.put("Discount for car - " + car.getPromoCode(),
+                            String.format("%.02f", discount));
+                } else {
+                    promoCodeMap.put("Discount for " + i + getDayOfMonthSuffix(i) + " car - " + car.getPromoCode(),
+                            String.format("%.02f", discount));
+                }
             }
             totalAmount += car.getActualRate();
             totalAmount -= discount;
@@ -143,7 +157,7 @@ public class InvoiceGenerator {
             table.addCell(cell);
             i++;
         }
-
+        customerProfile.setTotalInvoiceAmount(totalAmount);
         for(Map.Entry<String, String> promo:promoCodeMap.entrySet()) {
 
             addPromoCodeRows(table, promo.getKey(), promo.getValue());
@@ -202,13 +216,13 @@ public class InvoiceGenerator {
         DeviceRgb lightGrey = new DeviceRgb(227, 225, 225);
         cell.setBackgroundColor(lightGrey, 0.5f);
         table.addCell(cell);
-        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Car No."));
+        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Vehicle No."));
         cell.setBackgroundColor(lightGrey, 0.5f);
         table.addCell(cell);
-        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Car Model"));
+        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Vehicle Model"));
         cell.setBackgroundColor(lightGrey, 0.5f);
         table.addCell(cell);
-        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Car Type"));
+        cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Type"));
         cell.setBackgroundColor(lightGrey, 0.5f);
         table.addCell(cell);
         cell = new Cell(1, 1).add(getUnitsHeaderParagraph("Period"));
@@ -308,5 +322,18 @@ public class InvoiceGenerator {
         p.setTextAlignment(textAlignment);
         cell.add(p);
         return cell;
+    }
+
+    void generateConsolidatedReport(String fileName) throws IOException {
+        FileWriter csvWriter = new FileWriter(new File(fileName), true);
+        final String comma = ",";
+        final String newline = "\n";
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(customerProfile.getCustomerId()).append(comma).append(
+                customerProfile.getCustomerName()).append(comma).append(customerProfile.getEmail()
+        ).append(comma).append(customerProfile.getMobile()).append(comma).append(customerProfile.getApartmentNo())
+                .append(comma).append(customerProfile.getApartment()).append(comma).append(customerProfile.getTotalInvoiceAmount()).append(newline);
+        csvWriter.append(stringBuilder.toString());
+        csvWriter.close();
     }
 }

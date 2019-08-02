@@ -16,17 +16,21 @@ public class LoadCustomerDetails {
         static final int DAYS_MORE_THAN_8 = 8;
         static final int DAYS_MORE_THAN_3 = 3;
     }
+
     private static class Pack {
         static final String FULL = "Full";
         static final String MINI = "Mini";
+        static final String BIKE = "Bike";
     }
-    private static class CarType {
+    public static class CarType {
         static final String HATCHBACK = "Hatchback";
         static final String SMALL_CAR = "Small Car";
         static final String SEDAN = "Sedan";
         static final String SUV = "SUV";
+        static final String BIKE = "Bike";
     }
 
+    private static final double BIKE_PRICE = 300;
     private Map<Integer, Map<String, Map<String, Double>>> priceMap;
 
     private double applyPromocode(double actualRate, String promoCode) {
@@ -95,7 +99,6 @@ public class LoadCustomerDetails {
         priceMap.put(DayCriteria.DAYS_MORE_THAN_3, packMap);
 
         //---------------
-
     }
 
     private double getCarRate(final String pack, final String startDate, final String carType) throws ParseException {
@@ -107,11 +110,11 @@ public class LoadCustomerDetails {
         calendar.setTime(date);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int validDays;
-        if (date.before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jun-19"))
+        if (date.before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jul-19"))
         ) {
             validDays = 30;
         }
-        else if (date.after(new SimpleDateFormat("dd-MMM-yy").parse("30-Jun-19"))
+        else if (date.after(new SimpleDateFormat("dd-MMM-yy").parse("31-Jul-19"))
         ) {
             validDays = 0;
 
@@ -122,12 +125,18 @@ public class LoadCustomerDetails {
         }
 
         double rate = 0;
-        if(validDays >= DayCriteria.DAYS_MORE_THAN_20) {
+        if(pack.equalsIgnoreCase(Pack.BIKE)) {
+            if (day >= 16) {
+                rate = BIKE_PRICE / 2;
+            } else {
+                rate = BIKE_PRICE;
+            }
+        }
+        else if(validDays >= DayCriteria.DAYS_MORE_THAN_20) {
             rate = priceMap.get(DayCriteria.DAYS_MORE_THAN_20).get(pack).get(carType);
         } else if(validDays >= DayCriteria.DAYS_MORE_THAN_8) {
             rate = priceMap.get(DayCriteria.DAYS_MORE_THAN_8).get(pack).get(carType);
         } else if(validDays >= DayCriteria.DAYS_MORE_THAN_3) {
-            System.out.println("vvvvvv " + validDays);
             rate = priceMap.get(DayCriteria.DAYS_MORE_THAN_3).get(pack).get(carType);
         }
         return rate;
@@ -137,11 +146,14 @@ public class LoadCustomerDetails {
         Map<String, CustomerProfile> customerProfileMap = new HashMap<String, CustomerProfile>();
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile)));
         String line = "";
-        br.readLine();
+        //br.readLine();
         int rowcount = 0 ;
         while((line = br.readLine()) != null) {
+            System.out.println(line);
             String[] row = line.split(",");
+            if(row.length<1) continue;
             String active = row[0];
+            System.out.println(active + ":" + active.equalsIgnoreCase("Y"));
             if(active.equalsIgnoreCase("Y")) {
                 rowcount++;
 //                if(row.length < 14)
@@ -164,13 +176,13 @@ public class LoadCustomerDetails {
                 }
                 String carType = row[8];
                 String startDate = row[9];
-                if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).after(new SimpleDateFormat("dd-MMM-yy").parse("30-Jun-19"))
+                if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).after(new SimpleDateFormat("dd-MMM-yy").parse("31-Jul-19"))
                 ) {
                     System.out.println("saaaaaaa " + startDate + " : " + cusId);
                     continue;
-                } else if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jun-19"))
+                } else if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jul-19"))
                 ) {
-                    startDate = "01-Jun-19";
+                    startDate = "01-Jul-19";
                 }
                 String mobile = (row.length > 10) ? row[10] : "";
 //

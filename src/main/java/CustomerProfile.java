@@ -16,6 +16,6 @@ public class CustomerProfile {
     private String customerId;
     private String apartmentNo;
     private String apartment;
-    private String pack;
     private List<CustomerCar> cars;
+    private double totalInvoiceAmount;
 }

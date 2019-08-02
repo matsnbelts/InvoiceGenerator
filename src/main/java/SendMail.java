@@ -1,9 +1,10 @@
+import java.io.File;
 import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 class Mailer{
-    public static void send(String from,String password,String to,String sub,String msg){
+    public static void send(String from,String password,String to,String sub,String msg, String filename, String cc){
         //Get properties object
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -23,6 +24,9 @@ class Mailer{
         try {
             MimeMessage message = new MimeMessage(session);
             message.addRecipient(Message.RecipientType.TO,new InternetAddress(to));
+            message.addRecipient(Message.RecipientType.BCC,new InternetAddress("matsandbelts@gmail.com"));
+            message.addRecipient(Message.RecipientType.BCC,new InternetAddress("matsnbeltsapp@gmail.com"));
+
             message.setSubject(sub);
             message.setText(msg);
             // Create the message part
@@ -38,10 +42,10 @@ class Mailer{
 
             // Part two is attachment
             messageBodyPart = new MimeBodyPart();
-            String filename = "/Users/srinis/Documents/MatsNBelts/test-invoice/9840736881.pdf";
+            //String filename = "/Users/srinis/Documents/MatsNBelts/test-invoice/9840736881.pdf";
             DataSource source = new FileDataSource(filename);
             messageBodyPart.setDataHandler(new DataHandler(source));
-            messageBodyPart.setFileName(filename);
+            messageBodyPart.setFileName(new File(filename).getName());
             multipart.addBodyPart(messageBodyPart);
 
             // Send the complete message parts
@@ -60,8 +64,12 @@ public class SendMail
 {
     public static void main(String [] args) {
         //"johnpraveen@yahoo.com"
-        Mailer.send("matsnbeltsapp@gmail.com", "vsmatsnbelts",
-                "nitya.thomas@gmail.com", "Invoice - Mats N Belts", "This is an automatically generated email. Please do not reply to it.");
+        Mailer.send("matsnbeltsapp@gmail.com", "vsmatsnbelts", "srini.tvmalai11@gmail.com", "Mats And Belts - Invoice Generated for June'19",
+                "Hey " + "Srinivas" +
+                        ",\n This is an automatically generated email. Please do not reply to it.\n",
+                "/Users/srinis/Documents/MatsNBelts/test-invoice/BP-03.pdf", "");
+//        Mailer.send("matsnbeltsapp@gmail.com", "vsmatsnbelts",
+//                "nitya.thomas@gmail.com", "Invoice - Mats N Belts", "This is an automatically generated email. Please do not reply to it.", );
 
     }
 }  
