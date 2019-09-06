@@ -9,6 +9,8 @@ public class LoadCustomerDetails {
         static final String PROMO200 = "Promo200";
         static final String PROMO20= "Promo20%";
         static final String PROMO_FREE = "PromoFree";
+        static final String PROMO_50 = "Promo50";
+        static final String PLUS_100 = "Plus100";
     }
 
     private static class DayCriteria {
@@ -43,6 +45,10 @@ public class LoadCustomerDetails {
             discountRate = actualRate - (actualRate * .2);
         } else if(promoCode.equalsIgnoreCase(PromoCriteria.PROMO_FREE)) {
             discountRate = 0;
+        } else if(promoCode.equalsIgnoreCase(PromoCriteria.PROMO_50)) {
+            discountRate = actualRate - 50;
+        } else if(promoCode.equalsIgnoreCase(PromoCriteria.PLUS_100)) {
+            discountRate = actualRate - 100;
         } else {
             discountRate = actualRate;
         }
@@ -103,18 +109,18 @@ public class LoadCustomerDetails {
 
     private double getCarRate(final String pack, final String startDate, final String carType) throws ParseException {
 
-        Date date = new SimpleDateFormat("dd-MMM-yy").parse(startDate);
+        Date date = new SimpleDateFormat("dd/MM/yyyy").parse(startDate);
         Calendar calendar = Calendar.getInstance();
         //calendar.setTime(new Date());
 
         calendar.setTime(date);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int validDays;
-        if (date.before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jul-19"))
+        if (date.before(new SimpleDateFormat("dd/MM/yyyy").parse("01/08/2019"))
         ) {
             validDays = 30;
         }
-        else if (date.after(new SimpleDateFormat("dd-MMM-yy").parse("31-Jul-19"))
+        else if (date.after(new SimpleDateFormat("dd/MM/yyyy").parse("31/08/2019"))
         ) {
             validDays = 0;
 
@@ -146,7 +152,7 @@ public class LoadCustomerDetails {
         Map<String, CustomerProfile> customerProfileMap = new HashMap<String, CustomerProfile>();
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile)));
         String line = "";
-        //br.readLine();
+        br.readLine();
         int rowcount = 0 ;
         while((line = br.readLine()) != null) {
             System.out.println(line);
@@ -176,13 +182,13 @@ public class LoadCustomerDetails {
                 }
                 String carType = row[8];
                 String startDate = row[9];
-                if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).after(new SimpleDateFormat("dd-MMM-yy").parse("31-Jul-19"))
+                if (new SimpleDateFormat("dd/MM/yyyy").parse(startDate).after(new SimpleDateFormat("dd/MM/yyyy").parse("31/08/2019"))
                 ) {
                     System.out.println("saaaaaaa " + startDate + " : " + cusId);
                     continue;
-                } else if (new SimpleDateFormat("dd-MMM-yy").parse(startDate).before(new SimpleDateFormat("dd-MMM-yy").parse("01-Jul-19"))
+                } else if (new SimpleDateFormat("dd/MM/yyyy").parse(startDate).before(new SimpleDateFormat("dd/MM/yyyy").parse("01/08/2019"))
                 ) {
-                    startDate = "01-Jul-19";
+                    startDate = "01/08/2019";
                 }
                 String mobile = (row.length > 10) ? row[10] : "";
 //

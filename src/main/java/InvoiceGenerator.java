@@ -36,10 +36,10 @@ public class InvoiceGenerator {
 
     void generateInvoicePdf() throws IOException {
         if(area == null) {
-            area = "Karapakkam";
+            area = "";
         }
         if(cityPincode == null) {
-            cityPincode = "Chennai - 600097";
+            cityPincode = "Chennai";
         }
         createPdf(destinationFile);
     }
@@ -67,10 +67,10 @@ public class InvoiceGenerator {
         table.addCell(getCell(1, "MNB-19-" +  System.currentTimeMillis(), null, TextAlignment.RIGHT));
 
         table.addCell(getCell(1, "Invoice Date", lightGrey, TextAlignment.LEFT));
-        table.addCell(getCell(1, "July 31, 2019", null, TextAlignment.RIGHT));
+        table.addCell(getCell(1, "September 05, 2019", null, TextAlignment.RIGHT));
 
         table.addCell(getCell(1, "Payment Due Date", lightGrey, TextAlignment.LEFT));
-        table.addCell(getCell(1, "August 05, 2019", null, TextAlignment.RIGHT));
+        table.addCell(getCell(1, "September 07, 2019", null, TextAlignment.RIGHT));
         document.add(table);
         setUnitsLayout(document);
         setFooterLayout(document);
@@ -132,7 +132,7 @@ public class InvoiceGenerator {
                     getUnitsColumnParagraph(car.getCarType(), TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
-                    getUnitsColumnParagraph(car.getStartDate() + " - " + "31-July-19", TextAlignment.LEFT));
+                    getUnitsColumnParagraph(car.getStartDate() + " - " + "31/08/2019", TextAlignment.LEFT));
             table.addCell(cell);
             cell = new Cell(1, 1).add(
                     getUnitsColumnParagraph("1", TextAlignment.RIGHT));
